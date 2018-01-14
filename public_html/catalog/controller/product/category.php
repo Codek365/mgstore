@@ -93,6 +93,14 @@ class ControllerProductCategory extends Controller {
 			$this->document->setTitle($category_info['meta_title']);
 			$this->document->setDescription($category_info['meta_description']);
 			$this->document->setKeywords($category_info['meta_keyword']);
+			$this->document->setImage($category_info['image']);
+
+			if($category_info['image']){
+				$share_image = $this->model_tool_image->resize($category_info['image'], 600, 315);
+			} else {
+				$share_image = $this->model_tool_image->resize($this->config->get('config_image'), 600, 315);
+			}
+			$this->document->setImage($share_image);
 
 			$data['heading_title'] = $category_info['name'];
 
@@ -150,12 +158,13 @@ class ControllerProductCategory extends Controller {
 			$data['products'] = array();
 
 			$filter_data = array(
-				'filter_category_id' => $category_id,
-				'filter_filter'      => $filter,
-				'sort'               => $sort,
-				'order'              => $order,
-				'start'              => ($page - 1) * $limit,
-				'limit'              => $limit
+				'filter_category_id'  => $category_id,
+				'filter_sub_category' => $this->config->get('config_product_category') ? true : false,
+				'filter_filter'       => $filter,
+				'sort'                => $sort,
+				'order'               => $order,
+				'start'               => ($page - 1) * $limit,
+				'limit'               => $limit
 			);
 
 			$product_total = $this->model_catalog_product->getTotalProducts($filter_data);
@@ -337,7 +346,7 @@ class ControllerProductCategory extends Controller {
 			} else {
 				$this->document->addLink($this->url->link('product/category', 'path=' . $category_info['category_id'] . '&page='. $page), 'canonical');
 			}
-			
+
 			if ($page > 1) {
 			    $this->document->addLink($this->url->link('product/category', 'path=' . $category_info['category_id'] . (($page - 2) ? '&page='. ($page - 1) : '')), 'prev');
 			}

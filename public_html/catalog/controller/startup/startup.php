@@ -2,11 +2,7 @@
 class ControllerStartupStartup extends Controller {
 	public function index() {
 		// Store
-		if ($this->request->server['HTTPS']) {
-			$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "store WHERE REPLACE(`ssl`, 'www.', '') = '" . $this->db->escape('https://' . str_replace('www.', '', $_SERVER['HTTP_HOST']) . rtrim(dirname($_SERVER['PHP_SELF']), '/.\\') . '/') . "'");
-		} else {
-			$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "store WHERE REPLACE(`url`, 'www.', '') = '" . $this->db->escape('http://' . str_replace('www.', '', $_SERVER['HTTP_HOST']) . rtrim(dirname($_SERVER['PHP_SELF']), '/.\\') . '/') . "'");
-		}
+		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "store` WHERE REPLACE(`url`, 'www.', '') = '" . $this->db->escape(($this->request->server['HTTPS'] ? 'https://' : 'http://') . str_replace('www.', '', $_SERVER['HTTP_HOST']) . rtrim(dirname($_SERVER['PHP_SELF']), '/.\\') . '/') . "'");
 
 		if (isset($this->request->get['store_id'])) {
 			$this->config->set('config_store_id', (int)$this->request->get['store_id']);
@@ -18,7 +14,6 @@ class ControllerStartupStartup extends Controller {
 
 		if (!$query->num_rows) {
 			$this->config->set('config_url', HTTP_SERVER);
-			$this->config->set('config_ssl', HTTPS_SERVER);
 		}
 
 		// Settings
@@ -32,14 +27,23 @@ class ControllerStartupStartup extends Controller {
 			}
 		}
 
+		// Set time zone
+		if ($this->config->get('config_timezone')) {
+			date_default_timezone_set($this->config->get('config_timezone'));
+		}
+
 		// Theme
 		$this->config->set('template_cache', $this->config->get('developer_theme'));
 
 		// Url
-		$this->registry->set('url', new Url($this->config->get('config_url'), $this->config->get('config_ssl')));
+		$this->registry->set('url', new Url($this->config->get('config_url')));
 
 		// Language
 		$code = '';
+
+		if (isset($this->request->get['language'])) {
+
+		}
 
 		$this->load->model('localisation/language');
 
@@ -125,6 +129,7 @@ class ControllerStartupStartup extends Controller {
 
 		// Set the config language_id
 		$this->config->set('config_language_id', $language_codes[$code]);
+		$this->config->set('config_language', $code);
 
 		// Customer
 		$customer = new Cart\Customer($this->registry);
